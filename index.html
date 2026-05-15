@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Attendance & Leave Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Manrope', sans-serif;
+      background: linear-gradient(135deg,#eef6ff,#f8fbff,#ffffff);
+      color: #0f172a;
+    }
+
+    .neo {
+      background: rgba(255,255,255,0.85);
+      border: 1px solid rgba(15,23,42,0.06);
+      box-shadow: 0 15px 40px rgba(15,23,42,0.08);
+      backdrop-filter: blur(10px);
+    }
+
+    .soft-card {
+      background: linear-gradient(145deg,#ffffff,#f3f8ff);
+    }
+
+    .table-hover:hover {
+      background: rgba(6,182,212,0.08);
+      transform: translateY(-2px);
+      transition: 0.3s;
+    }
+
+    .hover-card {
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .hover-card:hover {
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: 0 20px 50px rgba(6,182,212,0.18);
+    }
+
+    .filter-control {
+      background: white;
+      border: 1px solid rgba(148,163,184,0.25);
+      color: #0f172a;
+      transition: all 0.25s ease;
+      cursor: pointer;
+    }
+
+    .filter-control:hover {
+      border-color: #06b6d4;
+      box-shadow: 0 0 0 4px rgba(6,182,212,0.08);
+    }
+  </style>
+</head>
+<body class="min-h-screen p-6">
+
+<div class="max-w-[1600px] mx-auto space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col xl:flex-row justify-between gap-5 items-center">
+
+    <div class="flex items-center gap-4">
+      <div class="w-16 h-16 rounded-3xl bg-cyan-500 flex items-center justify-center text-3xl font-black text-black">
+        A
+      </div>
+
+      <div>
+        <h1 class="text-5xl font-black tracking-tight">Attendance & Leave Tracker</h1>
+        <p class="text-slate-500 mt-2 text-lg">Smart HR Analytics & Attendance Monitoring</p>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-3 items-center">
+
+      <button onclick="openSettings()" class="bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-5 py-3 rounded-2xl text-sm font-semibold shadow-lg hover:scale-105 transition-all">
+        ⚙️ Settings
+      </button>
+
+      <button class="bg-white/10 px-5 py-3 rounded-2xl hover:bg-white/20 transition-all">
+        Export PDF
+      </button>
+
+    </div>
+  </div>
+
+  <!-- Compact Filters -->
+  <div class="neo rounded-3xl p-4">
+
+    <div class="flex flex-wrap gap-3 items-center">
+
+      <select id="monthFilter" class="filter-control px-4 py-2 rounded-xl text-sm min-w-[160px]">
+        <option>Current Month</option>
+        <option>May 2026</option>
+        <option>April 2026</option>
+      </select>
+
+      <select id="departmentFilter" class="filter-control px-4 py-2 rounded-xl text-sm min-w-[160px]">
+        <option>All Departments</option>
+        <option>HR</option>
+        <option>Sales</option>
+        <option>Operations</option>
+      </select>
+
+      <select id="statusFilter" class="filter-control px-4 py-2 rounded-xl text-sm min-w-[160px]">
+        <option>All Status</option>
+        <option>Present</option>
+        <option>Absent</option>
+        <option>On Leave</option>
+      </select>
+
+      <input id="searchFilter" type="text" placeholder="Search Employee" class="filter-control px-4 py-2 rounded-xl text-sm min-w-[220px]">
+
+      <div class="ml-auto flex gap-2 flex-wrap">
+        <button class="bg-cyan-500 text-black px-4 py-2 rounded-xl text-sm font-bold">Overview</button>
+        <button class="bg-slate-100 hover:bg-cyan-500 hover:text-white transition-all px-4 py-2 rounded-xl text-sm">Leave Analytics</button>
+        <button class="bg-slate-100 hover:bg-cyan-500 hover:text-white transition-all px-4 py-2 rounded-xl text-sm">Payroll Days</button>
+        <button class="bg-slate-100 hover:bg-cyan-500 hover:text-white transition-all px-4 py-2 rounded-xl text-sm">Attendance Heatmap</button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-5">
+
+    <div class="neo soft-card rounded-3xl p-6 hover-card">
+      <p class="text-slate-400 uppercase tracking-widest text-xs">Total Employees</p>
+      <h2 class="text-5xl font-black mt-4">25</h2>
+      <p class="text-cyan-400 mt-3">Active Workforce</p>
+    </div>
+
+    <div class="neo soft-card rounded-3xl p-6 hover-card">
+      <p class="text-slate-400 uppercase tracking-widest text-xs">Today's Attendance</p>
+      <h2 class="text-5xl font-black mt-4">92%</h2>
+      <p class="text-emerald-400 mt-3">23 Employees Present</p>
+    </div>
+
+    <div class="neo soft-card rounded-3xl p-6 hover-card">
+      <p class="text-slate-400 uppercase tracking-widest text-xs">Employees on Leave</p>
+      <h2 class="text-5xl font-black mt-4">4</h2>
+      <p class="text-yellow-400 mt-3">EL = Earned Leave • CL = Casual Leave • SL = Sick Leave</p>
+    </div>
+
+    <div class="neo soft-card rounded-3xl p-6 hover-card">
+      <p class="text-slate-400 uppercase tracking-widest text-xs">Payroll Days</p>
+      <h2 class="text-5xl font-black mt-4">548</h2>
+      <p class="text-cyan-400 mt-3">Current Month</p>
+    </div>
+
+    <div class="neo soft-card rounded-3xl p-6 hover-card">
+      <p class="text-slate-400 uppercase tracking-widest text-xs">Low Attendance Flags</p>
+      <h2 class="text-5xl font-black mt-4 text-red-400">3</h2>
+      <p class="text-red-400 mt-3">Below 75%</p>
+    </div>
+
+  </div>
+
+  <!-- Charts -->
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+    <div class="neo rounded-3xl p-6 xl:col-span-2">
+
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="text-2xl font-bold">Monthly Attendance Trend</h2>
+          <p class="text-slate-400">Attendance vs Leave distribution</p>
+        </div>
+
+        <span class="bg-cyan-500/20 text-cyan-400 px-4 py-2 rounded-xl text-sm">
+          LIVE ANALYTICS
+        </span>
+      </div>
+
+      <div class="h-[340px]">
+        <canvas id="attendanceChart"></canvas>
+      </div>
+
+    </div>
+
+    <div class="neo rounded-3xl p-6">
+
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="text-2xl font-bold">Leave Breakdown</h2>
+          <p class="text-slate-400">Current month leave usage</p>
+        </div>
+      </div>
+
+      <div class="h-[320px] flex items-center justify-center">
+        <canvas id="leaveChart"></canvas>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Quick Workforce Insights -->
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+    <div class="neo rounded-3xl p-6 bg-gradient-to-br from-cyan-50 to-blue-50">
+      <h2 class="text-2xl font-bold mb-5">Department Attendance</h2>
+
+      <div class="space-y-5">
+        <div>
+          <div class="flex justify-between mb-2 text-sm font-medium">
+            <span>Sales</span>
+            <span>96%</span>
+          </div>
+          <div class="w-full bg-white rounded-full h-3">
+            <div class="bg-cyan-500 h-3 rounded-full w-[96%]"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between mb-2 text-sm font-medium">
+            <span>Operations</span>
+            <span>88%</span>
+          </div>
+          <div class="w-full bg-white rounded-full h-3">
+            <div class="bg-emerald-500 h-3 rounded-full w-[88%]"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="neo rounded-3xl p-6 bg-gradient-to-br from-emerald-50 to-cyan-50">
+      <h2 class="text-2xl font-bold mb-5">Today's Live Attendance</h2>
+
+      <div class="space-y-4">
+        <div class="bg-white rounded-2xl p-4 flex justify-between items-center shadow-sm">
+          <div>
+            <h3 class="font-semibold">Rahul Sharma</h3>
+            <p class="text-slate-500 text-sm">Checked In • 09:05 AM</p>
+          </div>
+          <span class="bg-emerald-100 text-emerald-600 px-3 py-1 rounded-full text-xs">Present</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="neo rounded-3xl p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
+      <h2 class="text-2xl font-bold mb-5">Payroll Summary</h2>
+
+      <div class="space-y-5">
+        <div class="bg-white rounded-2xl p-4 shadow-sm">
+          <p class="text-slate-500 text-sm">Monthly Payable Days</p>
+          <h3 class="text-4xl font-black mt-2">548</h3>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Employee Attendance Table -->
+  <div class="neo rounded-3xl p-6 overflow-auto">
+
+    <div class="flex justify-between items-center mb-6">
+      <div>
+        <h2 class="text-3xl font-black">Monthly Attendance Summary</h2>
+        <p class="text-slate-400 mt-2">Printable employee attendance & payroll summary</p>
+      </div>
+
+      <button class="bg-cyan-500 text-black px-5 py-3 rounded-2xl font-bold">
+        Print Summary
+      </button>
+    </div>
+
+    <table class="w-full text-left text-sm min-w-[1400px]">
+
+      <thead>
+        <tr class="border-b border-white/10 text-slate-400 uppercase tracking-widest text-xs">
+          <th class="pb-4">Employee</th>
+          <th class="pb-4">Department</th>
+          <th class="pb-4">Working Days</th>
+          <th class="pb-4">Present</th>
+          <th class="pb-4">Absent</th>
+          <th class="pb-4">Half Day</th>
+          <th class="pb-4">EL Used</th>
+          <th class="pb-4">SL Used</th>
+          <th class="pb-4">CL Used</th>
+          <th class="pb-4">Attendance %</th>
+          <th class="pb-4">Payable Days</th>
+          <th class="pb-4">Status</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        <tr class="table-hover border-b border-white/5">
+          <td class="py-5">Rahul Sharma</td>
+          <td>Sales</td>
+          <td>26</td>
+          <td>24</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td class="text-emerald-400 font-bold">96%</td>
+          <td>25.5</td>
+          <td><span class="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full">Excellent</span></td>
+        </tr>
+
+        <tr class="table-hover border-b border-white/5">
+          <td class="py-5">Priya Verma</td>
+          <td>HR</td>
+          <td>26</td>
+          <td>20</td>
+          <td>3</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>2</td>
+          <td class="text-yellow-400 font-bold">82%</td>
+          <td>23.5</td>
+          <td><span class="bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full">Warning</span></td>
+        </tr>
+
+        <tr class="table-hover border-b border-white/5 bg-red-500/5">
+          <td class="py-5">Aman Gupta</td>
+          <td>Operations</td>
+          <td>26</td>
+          <td>16</td>
+          <td>7</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td class="text-red-400 font-bold">63%</td>
+          <td>18.5</td>
+          <td><span class="bg-red-500/20 text-red-400 px-3 py-1 rounded-full">Low Attendance</span></td>
+        </tr>
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+  <!-- Leave Balance Table -->
+  <div class="neo rounded-3xl p-6 overflow-auto">
+
+    <div class="flex justify-between items-center mb-6">
+      <div>
+        <h2 class="text-3xl font-black">Leave Balance Tracker</h2>
+        <p class="text-slate-400 mt-2">YTD leave entitlement & balance monitoring</p>
+      </div>
+    </div>
+
+    <table class="w-full text-left text-sm min-w-[1200px]">
+
+      <thead>
+        <tr class="border-b border-white/10 text-slate-400 uppercase tracking-widest text-xs">
+          <th class="pb-4">Employee</th>
+          <th class="pb-4">EL Entitlement</th>
+          <th class="pb-4">EL Used</th>
+          <th class="pb-4">EL Balance</th>
+          <th class="pb-4">SL Entitlement</th>
+          <th class="pb-4">SL Used</th>
+          <th class="pb-4">SL Balance</th>
+          <th class="pb-4">CL Entitlement</th>
+          <th class="pb-4">CL Used</th>
+          <th class="pb-4">CL Balance</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        <tr class="table-hover border-b border-white/5">
+          <td class="py-5">Rahul Sharma</td>
+          <td>21</td>
+          <td>3</td>
+          <td class="text-emerald-400 font-bold">18</td>
+          <td>12</td>
+          <td>1</td>
+          <td class="text-emerald-400 font-bold">11</td>
+          <td>12</td>
+          <td>2</td>
+          <td class="text-emerald-400 font-bold">10</td>
+        </tr>
+
+        <tr class="table-hover border-b border-white/5">
+          <td class="py-5">Priya Verma</td>
+          <td>21</td>
+          <td>6</td>
+          <td class="text-yellow-400 font-bold">15</td>
+          <td>12</td>
+          <td>2</td>
+          <td class="text-yellow-400 font-bold">10</td>
+          <td>12</td>
+          <td>5</td>
+          <td class="text-yellow-400 font-bold">7</td>
+        </tr>
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+  <!-- Settings Modal -->
+<div id="settingsModal" class="fixed inset-0 bg-black/40 hidden items-center justify-end z-50">
+  <div class="w-full max-w-lg h-full bg-white shadow-2xl p-8 overflow-y-auto">
+
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h2 class="text-3xl font-black text-slate-900">Dashboard Settings</h2>
+        <p class="text-slate-500 mt-1">Connect Google Sheets & tabs</p>
+      </div>
+
+      <button onclick="closeSettings()" class="text-2xl text-slate-600">✕</button>
+    </div>
+
+    <div class="space-y-6">
+
+      <div>
+        <label class="text-sm font-semibold text-slate-700 block mb-2">Attendance Sheet URL</label>
+        <input type="text" placeholder="Paste Google Sheet URL" class="w-full border border-slate-200 rounded-2xl px-4 py-3 bg-slate-50">
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-slate-700 block mb-2">Attendance Tab Name</label>
+        <input type="text" placeholder="Attendance_Raw" class="w-full border border-slate-200 rounded-2xl px-4 py-3 bg-slate-50">
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-slate-700 block mb-2">Employee Master Sheet</label>
+        <input type="text" placeholder="Employee_Master" class="w-full border border-slate-200 rounded-2xl px-4 py-3 bg-slate-50">
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-slate-700 block mb-2">Holiday List Tab</label>
+        <input type="text" placeholder="Holiday_List" class="w-full border border-slate-200 rounded-2xl px-4 py-3 bg-slate-50">
+      </div>
+
+      <button class="w-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white py-4 rounded-2xl font-bold text-lg shadow-lg">
+        Save & Sync Dashboard
+      </button>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+function openSettings() {
+  document.getElementById('settingsModal').classList.remove('hidden');
+  document.getElementById('settingsModal').classList.add('flex');
+}
+
+function closeSettings() {
+  document.getElementById('settingsModal').classList.add('hidden');
+  document.getElementById('settingsModal').classList.remove('flex');
+}
+</script>
+
+<script>
+const attendanceChart = document.getElementById('attendanceChart');
+
+new Chart(attendanceChart, {
+  type: 'line',
+  data: {
+    labels: ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15'],
+    datasets: [
+      {
+        label: 'Present',
+        data: [22,23,24,21,25,24,23,22,24,23,24,25,22,21,24],
+        borderColor: '#06b6d4',
+        backgroundColor: 'rgba(6,182,212,0.2)',
+        tension: 0.4,
+        fill: true
+      },
+      {
+        label: 'Leaves',
+        data: [2,1,1,3,0,1,2,3,1,2,1,0,2,4,1],
+        borderColor: '#f59e0b',
+        backgroundColor: 'rgba(245,158,11,0.2)',
+        tension: 0.4,
+        fill: true
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        labels: {
+          color: '#334155'
+        }
+      }
+    },
+    scales: {
+      x: {
+        ticks: {
+          color: '#94a3b8'
+        },
+        grid: {
+          color: 'rgba(148,163,184,0.12)'
+        }
+      },
+      y: {
+        ticks: {
+          color: '#94a3b8'
+        },
+        grid: {
+          color: 'rgba(148,163,184,0.12)'
+        }
+      }
+    }
+  }
+});
+
+const leaveChart = document.getElementById('leaveChart');
+
+new Chart(leaveChart, {
+  type: 'doughnut',
+  data: {
+    labels: ['Earned Leave','Sick Leave','Casual Leave'],
+    datasets: [{
+      data: [45,28,33],
+      backgroundColor: ['#06b6d4','#10b981','#f59e0b'],
+      borderWidth: 0
+    }]
+  },
+  options: {
+    plugins: {
+      legend: {
+        labels: {
+          color: '#334155'
+        }
+      }
+    }
+  }
+});
+const rows = document.querySelectorAll('table tbody tr');
+
+function applyFilters() {
+  const search = document.getElementById('searchFilter').value.toLowerCase();
+  const department = document.getElementById('departmentFilter').value;
+  const status = document.getElementById('statusFilter').value;
+
+  rows.forEach(row => {
+    const employee = row.children[0]?.innerText.toLowerCase() || '';
+    const dept = row.children[1]?.innerText || '';
+    const statusText = row.innerText || '';
+
+    const matchesSearch = employee.includes(search);
+    const matchesDept = department === 'All Departments' || dept === department;
+
+    let matchesStatus = true;
+
+    if(status === 'Present') {
+      matchesStatus = statusText.includes('Excellent') || statusText.includes('Present');
+    }
+
+    if(status === 'Absent') {
+      matchesStatus = statusText.includes('Low Attendance');
+    }
+
+    if(status === 'On Leave') {
+      matchesStatus = statusText.includes('Warning');
+    }
+
+    row.style.display = matchesSearch && matchesDept && matchesStatus ? '' : 'none';
+  });
+}
+
+document.getElementById('searchFilter').addEventListener('input', applyFilters);
+document.getElementById('departmentFilter').addEventListener('change', applyFilters);
+document.getElementById('statusFilter').addEventListener('change', applyFilters);
+
+const navButtons = document.querySelectorAll('.ml-auto button');
+navButtons.forEach(btn => {
+  btn.addEventListener('mouseenter', () => {
+    btn.style.transform = 'translateY(-2px)';
+  });
+
+  btn.addEventListener('mouseleave', () => {
+    btn.style.transform = 'translateY(0px)';
+  });
+
+  btn.addEventListener('click', () => {
+    navButtons.forEach(b => {
+      b.classList.remove('bg-cyan-500','text-black','font-bold');
+      b.classList.add('bg-white/10');
+    });
+
+    btn.classList.remove('bg-white/10');
+    btn.classList.add('bg-cyan-500','text-black','font-bold');
+  });
+});
+</script>
+
+</body>
+</html>
